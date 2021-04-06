@@ -1,9 +1,26 @@
 import * as fs from 'fs';
 import * as libxmljs from 'libxmljs';
 import * as xml2js from 'xml2js';
+import { cli } from 'cli-ux';
 import { Command, flags } from '@oclif/command';
 
 const xmlnsPrefix: string = 'mw';
+
+async function Revision(el: libxmljs.Element) {
+  const revision = await xml2js.parseStringPromise(el.toString());
+  const page = await xml2js.parseStringPromise(el.parent().toString());
+
+  return {
+    page: {
+      title: page.page.title[0],
+      id: page.page.id[0],
+    },
+    id: revision.revision.id[0],
+    timestamp: revision.revision.timestamp[0],
+    sha1: revision.revision.sha1[0],
+    buffer: el.toString(),
+  };
+}
 
 export default class Stamp extends Command {
   static description = 'timestamp a MediaWiki export';
@@ -27,9 +44,25 @@ export default class Stamp extends Command {
       `Loaded ${buf.length} bytes exported from ${elSiteInfo.siteinfo.sitename} running ${elSiteInfo.siteinfo.generator}`
     );
 
-    // Find all PAGE elements.
-    const pages = this.findElements(doc, '//mw:page');
-    this.log(`Found ${pages.length} pages`);
+    // Find all REVISION elements.
+    const elRevisions = this.findElements(doc, '//mw:revision');
+    const revisions = await Promise.all(
+      elRevisions.map(async (el) => Revision(el))
+    );
+    const pages = new Set(revisions.map((revision) => revision.page.title));
+
+    this.log(`Replayed ${revisions.length} revisions of ${pages.size} pages:`);
+    cli.table(
+      revisions,
+      {
+        page: { get: (row: any) => row.page.title },
+        id: { header: 'ID' },
+        timestamp: {},
+        sha1: { header: 'SHA1' },
+        size: { get: (row: any) => row.buffer.length },
+      },
+      { sort: 'id' }
+    );
   }
 
   findElements(doc: libxmljs.Document, xpath: string): Array<libxmljs.Element> {
