@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as libxmljs from 'libxmljs';
+import * as path from 'path';
 import * as xml2js from 'xml2js';
 import { cli } from 'cli-ux';
 import { Command, flags } from '@oclif/command';
@@ -45,6 +46,9 @@ export default class Stamp extends Command {
     this.printRevisionLog(revlog, flags);
 
     await OpenTimestamps.stamp(revlog.map((rev) => rev._otsTimestamp));
+    this.log(`Submitted ${revlog.length} timestamps to OpenTimestamps`);
+
+    await this.saveRevisionLog(revlog, args.export);
   }
 
   findElements(doc: libxmljs.Document, xpath: string): Array<libxmljs.Element> {
@@ -82,5 +86,16 @@ export default class Stamp extends Command {
       },
       { sort: 'id', ...flags }
     );
+  }
+
+  async saveRevisionLog(revlog: RevisionLog, srcFilename: string) {
+    const dstFilename = `${path.basename(srcFilename)}.ots.json`;
+    const obj = Object.fromEntries(
+      revlog.map((rev) => [rev.sha1, rev.serializeReceipt()])
+    );
+    const buf = JSON.stringify(obj, null, 2);
+
+    await fs.writeFileSync(dstFilename, buf);
+    this.log(`Wrote ${buf.length} bytes to receipt ${dstFilename}`);
   }
 }
