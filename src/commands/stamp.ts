@@ -11,6 +11,9 @@ const xmlnsPrefix: string = 'mw';
 
 export default class Stamp extends Command {
   static description = 'timestamp a MediaWiki export';
+  static flags = {
+    ...cli.table.flags(),
+  };
   static args = [
     { name: 'export', description: 'MediaWiki ".xml" export', required: true },
   ];
@@ -39,10 +42,9 @@ export default class Stamp extends Command {
     const pages = new Set(revlog.map((rev) => rev.page.title));
 
     this.log(`Replayed ${revlog.length} revisions of ${pages.size} pages:`);
-    this.printRevisionLog(revlog);
+    this.printRevisionLog(revlog, flags);
 
-    const stamps = await this.stampRevisionLog(revlog);
-    this.log(JSON.stringify(stamps));
+    await OpenTimestamps.stamp(revlog.map((rev) => rev._otsTimestamp));
   }
 
   findElements(doc: libxmljs.Document, xpath: string): Array<libxmljs.Element> {
@@ -63,7 +65,7 @@ export default class Stamp extends Command {
     );
   }
 
-  printRevisionLog(revlog: RevisionLog) {
+  printRevisionLog(revlog: RevisionLog, flags: any) {
     cli.table(
       revlog,
       {
@@ -71,29 +73,14 @@ export default class Stamp extends Command {
         id: { header: 'ID' },
         timestamp: {},
         sha1: { header: 'SHA1' },
-        _sha256: { header: 'SHA256' },
         _size: { header: 'Size' },
+        _otsReceipt: {
+          extended: true,
+          header: 'Receipt',
+          get: (row) => row.serializeReceipt(),
+        },
       },
-      { sort: 'id' }
+      { sort: 'id', ...flags }
     );
-  }
-
-  async stampRevisionLog(revlog: RevisionLog) {
-    // Build of a map of (SHA1, timestamp) pairs.
-    const detaches = new Map(
-      revlog.map((rev) => {
-        this.printRevisionLog([rev]);
-        return [
-          rev.sha1,
-          OpenTimestamps.DetachedTimestampFile.fromHash(
-            new OpenTimestamps.Ops.OpSHA256(),
-            Buffer.from(rev._sha256, 'base64')
-          ),
-        ];
-      })
-    );
-    // Submit all the timestamps in one batch (tree).
-    await OpenTimestamps.stamp([...detaches.values()]);
-    return detaches;
   }
 }

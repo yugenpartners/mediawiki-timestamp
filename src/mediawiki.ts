@@ -1,6 +1,7 @@
 import * as crypto from 'crypto';
 import * as libxmljs from 'libxmljs';
 import * as xml2js from 'xml2js';
+const OpenTimestamps = require('opentimestamps');
 
 type Page = {
   id: number;
@@ -10,6 +11,8 @@ type Page = {
 type RevisionLog = Array<Revision>;
 
 class Revision {
+  static base = 'base64';
+
   page: Page;
   id: number;
   timestamp: string;
@@ -20,6 +23,7 @@ class Revision {
   sha1: string;
 
   // Our metadata:
+  _otsTimestamp: any;
   _sha256: string;
   _size: number;
 
@@ -41,9 +45,20 @@ class Revision {
 
     const hash = crypto.createHash('sha256');
     hash.update(buf);
-    R._sha256 = hash.digest('base64');
+    R._sha256 = hash.digest(<crypto.HexBase64Latin1Encoding>Revision.base);
+
+    R._otsTimestamp = OpenTimestamps.DetachedTimestampFile.fromHash(
+      new OpenTimestamps.Ops.OpSHA256(),
+      Buffer.from(R._sha256, Revision.base)
+    );
 
     return R;
+  }
+
+  serializeReceipt(): string {
+    return Buffer.from(this._otsTimestamp.serializeToBytes()).toString(
+      Revision.base
+    );
   }
 }
 
