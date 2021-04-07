@@ -1,29 +1,20 @@
 import * as fs from 'fs';
 import * as libxmljs from 'libxmljs';
+import * as path from 'path';
 import * as xml2js from 'xml2js';
 import { cli } from 'cli-ux';
 import { Command, flags } from '@oclif/command';
+const OpenTimestamps = require('opentimestamps');
+
+import { Revision, RevisionLog } from '../mediawiki';
 
 const xmlnsPrefix: string = 'mw';
 
-async function Revision(el: libxmljs.Element) {
-  const revision = await xml2js.parseStringPromise(el.toString());
-  const page = await xml2js.parseStringPromise(el.parent().toString());
-
-  return {
-    page: {
-      title: page.page.title[0],
-      id: page.page.id[0],
-    },
-    id: revision.revision.id[0],
-    timestamp: revision.revision.timestamp[0],
-    sha1: revision.revision.sha1[0],
-    buffer: el.toString(),
-  };
-}
-
 export default class Stamp extends Command {
   static description = 'timestamp a MediaWiki export';
+  static flags = {
+    ...cli.table.flags(),
+  };
   static args = [
     { name: 'export', description: 'MediaWiki ".xml" export', required: true },
   ];
@@ -46,23 +37,18 @@ export default class Stamp extends Command {
 
     // Find all REVISION elements.
     const elRevisions = this.findElements(doc, '//mw:revision');
-    const revisions = await Promise.all(
-      elRevisions.map(async (el) => Revision(el))
+    const revlog = await Promise.all(
+      elRevisions.map(async (el) => Revision.fromElement(el))
     );
-    const pages = new Set(revisions.map((revision) => revision.page.title));
+    const pages = new Set(revlog.map((rev) => rev.page.title));
 
-    this.log(`Replayed ${revisions.length} revisions of ${pages.size} pages:`);
-    cli.table(
-      revisions,
-      {
-        page: { get: (row: any) => row.page.title },
-        id: { header: 'ID' },
-        timestamp: {},
-        sha1: { header: 'SHA1' },
-        size: { get: (row: any) => row.buffer.length },
-      },
-      { sort: 'id' }
-    );
+    this.log(`Replayed ${revlog.length} revisions of ${pages.size} pages:`);
+    this.printRevisionLog(revlog, flags);
+
+    await OpenTimestamps.stamp(revlog.map((rev) => rev._otsTimestamp));
+    this.log(`Submitted ${revlog.length} timestamps to OpenTimestamps`);
+
+    await this.saveRevisionLog(revlog, args.export);
   }
 
   findElements(doc: libxmljs.Document, xpath: string): Array<libxmljs.Element> {
@@ -81,5 +67,35 @@ export default class Stamp extends Command {
     return await xml2js.parseStringPromise(
       this.getElement(doc, xpath).toString()
     );
+  }
+
+  printRevisionLog(revlog: RevisionLog, flags: any) {
+    cli.table(
+      revlog,
+      {
+        page: { get: (row) => row.page.title },
+        id: { header: 'ID' },
+        timestamp: {},
+        sha1: { header: 'SHA1' },
+        _size: { header: 'Size' },
+        _otsReceipt: {
+          extended: true,
+          header: 'Receipt',
+          get: (row) => row.serializeReceipt(),
+        },
+      },
+      { sort: 'id', ...flags }
+    );
+  }
+
+  async saveRevisionLog(revlog: RevisionLog, srcFilename: string) {
+    const dstFilename = `${path.basename(srcFilename)}.ots.json`;
+    const obj = Object.fromEntries(
+      revlog.map((rev) => [rev.sha1, rev.serializeReceipt()])
+    );
+    const buf = JSON.stringify(obj, null, 2);
+
+    await fs.writeFileSync(dstFilename, buf);
+    this.log(`Wrote ${buf.length} bytes to receipt ${dstFilename}`);
   }
 }
