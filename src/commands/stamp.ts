@@ -52,17 +52,7 @@ export default class Stamp extends Command {
     const pages = new Set(revisions.map((revision) => revision.page.title));
 
     this.log(`Replayed ${revisions.length} revisions of ${pages.size} pages:`);
-    cli.table(
-      revisions,
-      {
-        page: { get: (row: any) => row.page.title },
-        id: { header: 'ID' },
-        timestamp: {},
-        sha1: { header: 'SHA1' },
-        size: { get: (row: any) => row.buffer.length },
-      },
-      { sort: 'id' }
-    );
+    this.printRevisionLog(revisions);
   }
 
   findElements(doc: libxmljs.Document, xpath: string): Array<libxmljs.Element> {
@@ -80,6 +70,21 @@ export default class Stamp extends Command {
   async parseElement(doc: libxmljs.Document, xpath: string): Promise<object> {
     return await xml2js.parseStringPromise(
       this.getElement(doc, xpath).toString()
+    );
+  }
+
+  printRevisionLog(revisions: Array<any>) {
+    cli.table(
+      revisions,
+      {
+        page: { get: (row: any) => row.page.title },
+        id: { header: 'ID' },
+        timestamp: {},
+        sha1: { header: 'SHA1' },
+        sha256: { header: 'SHA256' },
+        size: {},
+      },
+      { sort: 'id' }
     );
   }
 }
