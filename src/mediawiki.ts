@@ -73,12 +73,6 @@ export class RevisionLog {
         id: { header: 'ID' },
         timestamp: {},
         sha1: { header: 'SHA1' },
-        _size: { header: 'Size' },
-        _otsReceipt: {
-          extended: true,
-          header: 'Receipt',
-          get: (row) => row.serializeReceipt(),
-        },
         ...(this.ctx.columns || {}),
       },
       { sort: 'id', ...flags }
@@ -151,8 +145,6 @@ export class Revision {
     // Hash the entire REVISION element as the leaf of the timestamped Merkle
     // tree.
     const buf = el.toString();
-    R._size = buf.length;
-
     const hash = crypto.createHash('sha256');
     hash.update(buf);
     R._sha256 = hash.digest(<crypto.HexBase64Latin1Encoding>Revision.base);
