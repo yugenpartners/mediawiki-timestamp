@@ -18,18 +18,18 @@ export default class Stamp extends Command {
 
     // FIXME: <Context>(<unknown>this) has a code-smell.
     const revlog = new RevisionLog(<Context>(<unknown>this));
+    cli.action.start(`Replaying ${args.export}`);
     await revlog.fromFile(args.export);
-    this.log(
-      `Replayed ${revlog.revisions.length} revisions of ${revlog.pages.size} pages:`
+    cli.action.stop(
+      `${revlog.revisions.length} revisions of ${revlog.pages.size} pages:`
     );
     revlog.print(flags);
 
+    cli.action.start('Submitting to OpenTimestamps');
     await OpenTimestamps.stamp(
       revlog.revisions.map((rev) => rev._otsTimestamp)
     );
-    this.log(
-      `Submitted ${revlog.revisions.length} timestamps to OpenTimestamps`
-    );
+    cli.action.stop(`${revlog.revisions.length} timestamps`);
 
     await revlog.saveReceipts(args.export);
   }

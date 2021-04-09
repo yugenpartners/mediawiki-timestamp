@@ -26,9 +26,10 @@ export default class Verify extends Command {
     const { args, flags } = this.parse(Verify);
 
     const revlog = new RevisionLog(<Context>(<unknown>this));
+    cli.action.start(`Replaying ${args.export}`);
     await revlog.fromFile(args.export, args.receipts);
-    this.log(
-      `Replayed ${revlog.revisions.length} revisions of ${revlog.pages.size} pages:`
+    cli.action.stop(
+      `${revlog.revisions.length} revisions of ${revlog.pages.size} pages:`
     );
     revlog.print(flags);
   }
