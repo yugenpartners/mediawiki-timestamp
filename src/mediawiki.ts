@@ -1,16 +1,90 @@
 import * as crypto from 'crypto';
+import * as fs from 'fs';
 import * as libxmljs from 'libxmljs';
+import * as path from 'path';
 import * as xml2js from 'xml2js';
+import { cli } from 'cli-ux';
 const OpenTimestamps = require('opentimestamps');
 
-type Page = {
+import { XMLNS_PREFIX } from './constants';
+import { findElements, ns, parseElement } from './util';
+
+export interface Context {
+  debug: void;
+  log: void;
+}
+
+export type Page = {
   id: number;
   title: string;
 };
 
-type RevisionLog = Array<Revision>;
+export class RevisionLog {
+  ctx: any;
+  pages: Set<Page>;
+  revisions: Array<Revision>;
 
-class Revision {
+  constructor(ctx: Context) {
+    this.ctx = ctx;
+    this.pages = new Set();
+    this.revisions = new Array();
+  }
+
+  async fromFile(src: string) {
+    // Load and parse the ".xml" export.
+    const buf = await fs.readFileSync(src);
+    const doc = <libxmljs.Document>libxmljs.parseXml(buf.toString());
+    this.ctx.debug(`xmlns=${ns(doc)[XMLNS_PREFIX]}`);
+
+    // Parse the SITEINFO element for metadata about the export.
+    const elSiteInfo = <any>await parseElement(doc, `${XMLNS_PREFIX}:siteinfo`);
+    this.ctx.debug(
+      `Loaded ${buf.length} bytes exported from ${elSiteInfo.siteinfo.sitename} running ${elSiteInfo.siteinfo.generator}`
+    );
+
+    // Find all REVISION elements.
+    const elRevisions = findElements(doc, '//mw:revision');
+    this.revisions = await Promise.all(
+      elRevisions.map(async (el) => {
+        const R = await Revision.fromElement(el);
+        this.pages.add(R.page);
+        return R;
+      })
+    );
+  }
+
+  print(flags: any) {
+    cli.table(
+      this.revisions,
+      {
+        page: { get: (row) => row.page.title },
+        id: { header: 'ID' },
+        timestamp: {},
+        sha1: { header: 'SHA1' },
+        _size: { header: 'Size' },
+        _otsReceipt: {
+          extended: true,
+          header: 'Receipt',
+          get: (row) => row.serializeReceipt(),
+        },
+      },
+      { sort: 'id', ...flags }
+    );
+  }
+
+  async saveReceipts(xmlFilename: string) {
+    const dst = `${path.basename(xmlFilename)}.ots.json`;
+    const obj = Object.fromEntries(
+      this.revisions.map((rev) => [rev.sha1, rev.serializeReceipt()])
+    );
+    const buf = JSON.stringify(obj, null, 2);
+
+    await fs.writeFileSync(dst, buf);
+    this.ctx.log(`Wrote ${buf.length} bytes to receipt ${dst}`);
+  }
+}
+
+export class Revision {
   static base = 'base64';
 
   page: Page;
@@ -61,5 +135,3 @@ class Revision {
     );
   }
 }
-
-export { Page, Revision, RevisionLog };
