@@ -21,13 +21,13 @@ export type Page = {
 
 export class RevisionLog {
   ctx: any;
-  pages: Set<Page>;
+  pages: Map<string, Page>;
   receipts: Map<string, string> | undefined;
   revisions: Array<Revision>;
 
   constructor(ctx: Context) {
     this.ctx = ctx;
-    this.pages = new Set();
+    this.pages = new Map();
     this.revisions = new Array();
   }
 
@@ -52,7 +52,7 @@ export class RevisionLog {
     this.revisions = await Promise.all(
       elRevisions.map(async (el) => {
         const R = await Revision.fromElement(this, el);
-        this.pages.add(R.page);
+        this.pages.set(R.page.title, R.page);
         return R;
       })
     );
