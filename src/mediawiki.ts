@@ -22,6 +22,7 @@ export type Page = {
 export class RevisionLog {
   ctx: any;
   pages: Set<Page>;
+  receipts: Map<string, string> | undefined;
   revisions: Array<Revision>;
 
   constructor(ctx: Context) {
@@ -30,11 +31,15 @@ export class RevisionLog {
     this.revisions = new Array();
   }
 
-  async fromFile(src: string) {
+  async fromFile(xml: string, receipts?: string) {
     // Load and parse the ".xml" export.
-    const buf = await fs.readFileSync(src);
+    const buf = await fs.readFileSync(xml);
     const doc = <libxmljs.Document>libxmljs.parseXml(buf.toString());
     this.ctx.debug(`xmlns=${ns(doc)[XMLNS_PREFIX]}`);
+
+    if (receipts != undefined) {
+      await this.loadReceipts(receipts);
+    }
 
     // Parse the SITEINFO element for metadata about the export.
     const elSiteInfo = <any>await parseElement(doc, `${XMLNS_PREFIX}:siteinfo`);
@@ -46,7 +51,7 @@ export class RevisionLog {
     const elRevisions = findElements(doc, '//mw:revision');
     this.revisions = await Promise.all(
       elRevisions.map(async (el) => {
-        const R = await Revision.fromElement(el);
+        const R = await Revision.fromElement(this, el);
         this.pages.add(R.page);
         return R;
       })
@@ -70,6 +75,11 @@ export class RevisionLog {
       },
       { sort: 'id', ...flags }
     );
+  }
+
+  async loadReceipts(src: string) {
+    const buf = await fs.readFileSync(src);
+    this.receipts = new Map(Object.entries(JSON.parse(buf.toString())));
   }
 
   async saveReceipts(xmlFilename: string) {
@@ -101,7 +111,10 @@ export class Revision {
   _sha256: string;
   _size: number;
 
-  static async fromElement(el: libxmljs.Element): Promise<Revision> {
+  static async fromElement(
+    log: RevisionLog | null,
+    el: libxmljs.Element
+  ): Promise<Revision> {
     const R = new Revision();
 
     const page = await xml2js.parseStringPromise(el.parent().toString());
@@ -121,15 +134,29 @@ export class Revision {
     hash.update(buf);
     R._sha256 = hash.digest(<crypto.HexBase64Latin1Encoding>Revision.base);
 
-    R._otsTimestamp = OpenTimestamps.DetachedTimestampFile.fromHash(
-      new OpenTimestamps.Ops.OpSHA256(),
-      Buffer.from(R._sha256, Revision.base)
-    );
+    if (log?.receipts != undefined) {
+      R._otsTimestamp = R.deserializeReceipt(log?.receipts.get(R.sha1));
+    } else {
+      R._otsTimestamp = OpenTimestamps.DetachedTimestampFile.fromHash(
+        new OpenTimestamps.Ops.OpSHA256(),
+        Buffer.from(R._sha256, Revision.base)
+      );
+    }
 
     return R;
   }
 
+  deserializeReceipt(buf: string | undefined): string | undefined {
+    if (buf == undefined) return undefined;
+
+    return OpenTimestamps.DetachedTimestampFile.deserialize(
+      Buffer.from(buf, Revision.base)
+    );
+  }
+
   serializeReceipt(): string {
+    if (this._otsTimestamp == undefined) return '';
+
     return Buffer.from(this._otsTimestamp.serializeToBytes()).toString(
       Revision.base
     );
