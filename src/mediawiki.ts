@@ -97,6 +97,8 @@ export class RevisionLog {
 export class Revision {
   static base = 'base64';
 
+  log: RevisionLog | null;
+
   page: Page;
   id: number;
   timestamp: string;
@@ -107,7 +109,8 @@ export class Revision {
   sha1: string;
 
   // Our metadata:
-  _otsTimestamp: any;
+  _otsReceipt: any; // loaded and verified from .ots.json collection
+  _otsTimestamp: any; // generated on .xml load
   _sha256: string;
   _size: number;
 
@@ -116,17 +119,23 @@ export class Revision {
     el: libxmljs.Element
   ): Promise<Revision> {
     const R = new Revision();
+    R.log = log;
 
+    // Parse parent PAGE element.
     const page = await xml2js.parseStringPromise(el.parent().toString());
     R.page = <Page>{
       title: page.page.title[0],
       id: page.page.id[0],
     };
+
+    // Parse this REVISION element.
     const revision = await xml2js.parseStringPromise(el.toString());
     R.id = revision.revision.id[0];
     R.sha1 = revision.revision.sha1[0];
     R.timestamp = revision.revision.timestamp[0];
 
+    // Hash the entire REVISION element as the leaf of the timestamped Merkle
+    // tree.
     const buf = el.toString();
     R._size = buf.length;
 
@@ -134,13 +143,16 @@ export class Revision {
     hash.update(buf);
     R._sha256 = hash.digest(<crypto.HexBase64Latin1Encoding>Revision.base);
 
+    // Generate a timestamp and proof for all inputs.
+    R._otsTimestamp = OpenTimestamps.DetachedTimestampFile.fromHash(
+      new OpenTimestamps.Ops.OpSHA256(),
+      Buffer.from(R._sha256, Revision.base)
+    );
+
+    // If this Revision belongs to a RevisionLog, look up a previous receipt
+    // that may be present from a collection loaded for verification.
     if (log?.receipts != undefined) {
-      R._otsTimestamp = R.deserializeReceipt(log?.receipts.get(R.sha1));
-    } else {
-      R._otsTimestamp = OpenTimestamps.DetachedTimestampFile.fromHash(
-        new OpenTimestamps.Ops.OpSHA256(),
-        Buffer.from(R._sha256, Revision.base)
-      );
+      R._otsReceipt = R.deserializeReceipt(log?.receipts.get(R.sha1));
     }
 
     return R;
