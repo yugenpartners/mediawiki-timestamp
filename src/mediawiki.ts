@@ -14,6 +14,13 @@ export interface Context {
   log: void;
 }
 
+export enum VerificationStatus {
+  Unknown,
+  Passed,
+  Failed,
+  Missing,
+}
+
 export type Page = {
   id: number;
   title: string;
@@ -72,6 +79,7 @@ export class RevisionLog {
           header: 'Receipt',
           get: (row) => row.serializeReceipt(),
         },
+        ...(this.ctx.columns || {}),
       },
       { sort: 'id', ...flags }
     );
@@ -91,6 +99,10 @@ export class RevisionLog {
 
     await fs.writeFileSync(dst, buf);
     this.ctx.log(`Wrote ${buf.length} bytes to receipt ${dst}`);
+  }
+
+  async verify() {
+    await Promise.all(this.revisions.map(async (rev) => await rev.verify()));
   }
 }
 
@@ -113,6 +125,8 @@ export class Revision {
   _otsTimestamp: any; // generated on .xml load
   _sha256: string;
   _size: number;
+  _verificationResult: string | undefined;
+  _verificationStatus: VerificationStatus = VerificationStatus.Unknown;
 
   static async fromElement(
     log: RevisionLog | null,
@@ -172,5 +186,20 @@ export class Revision {
     return Buffer.from(this._otsTimestamp.serializeToBytes()).toString(
       Revision.base
     );
+  }
+
+  async verify() {
+    if (this._otsReceipt == undefined) {
+      this._verificationStatus = VerificationStatus.Missing;
+      return;
+    }
+
+    try {
+      await OpenTimestamps.verify(this._otsReceipt, this._otsTimestamp);
+      this._verificationStatus = VerificationStatus.Passed;
+    } catch (err) {
+      this._verificationResult = err.message;
+      this._verificationStatus = VerificationStatus.Failed;
+    }
   }
 }
