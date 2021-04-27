@@ -29,8 +29,10 @@ export type Page = {
 export class RevisionLog {
   ctx: any;
   pages: Map<string, Page>;
-  receipts: Map<string, string> | undefined;
   revisions: Array<Revision>;
+
+  // MediaWiki keys revisions wiki-wide, not per page, so we can too.
+  receipts: Map<number, string> | undefined;
 
   constructor(ctx: Context) {
     this.ctx = ctx;
@@ -81,13 +83,18 @@ export class RevisionLog {
 
   async loadReceipts(src: string) {
     const buf = await fs.readFileSync(src);
-    this.receipts = new Map(Object.entries(JSON.parse(buf.toString())));
+    this.receipts = new Map( // but cast to Map<number, string>
+      Object.entries(JSON.parse(buf.toString())).map(([k, v]) => [
+        <number>(<unknown>k),
+        <string>v,
+      ])
+    );
   }
 
   async saveReceipts(xmlFilename: string) {
     const dst = `${path.basename(xmlFilename)}.ots.json`;
     const obj = Object.fromEntries(
-      this.revisions.map((rev) => [rev.sha1, rev.serializeReceipt()])
+      this.revisions.map((rev) => [rev.id, rev.serializeReceipt()])
     );
     const buf = JSON.stringify(obj, null, 2);
 
@@ -158,7 +165,7 @@ export class Revision {
     // If this Revision belongs to a RevisionLog, look up a previous receipt
     // that may be present from a collection loaded for verification.
     if (log?.receipts != undefined) {
-      R._otsReceipt = R.deserializeReceipt(log?.receipts.get(R.sha1));
+      R._otsReceipt = R.deserializeReceipt(log?.receipts.get(R.id));
     }
 
     return R;
