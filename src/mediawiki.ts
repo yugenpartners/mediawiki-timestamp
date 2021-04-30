@@ -6,12 +6,19 @@ import * as xml2js from 'xml2js';
 import { cli } from 'cli-ux';
 const OpenTimestamps = require('opentimestamps');
 
-import { XMLNS_PREFIX } from './constants';
+import { RECEIPT_COLLECTION_FORMAT_VERSION, XMLNS_PREFIX } from './constants';
 import { findElements, ns, parseElement } from './util';
 
 export interface Context {
   debug: void;
   log: void;
+}
+
+export interface ReceiptCollection {
+  mwts: {
+    version: string;
+  };
+  receipts: object;
 }
 
 export enum VerificationStatus {
@@ -83,8 +90,9 @@ export class RevisionLog {
 
   async loadReceipts(src: string) {
     const buf = await fs.readFileSync(src);
+    const col: ReceiptCollection = JSON.parse(buf.toString());
     this.receipts = new Map( // but cast to Map<number, string>
-      Object.entries(JSON.parse(buf.toString())).map(([k, v]) => [
+      Object.entries(col.receipts).map(([k, v]) => [
         <number>(<unknown>k),
         <string>v,
       ])
@@ -93,10 +101,16 @@ export class RevisionLog {
 
   async saveReceipts(xmlFilename: string) {
     const dst = `${path.basename(xmlFilename)}.ots.json`;
-    const obj = Object.fromEntries(
+    const receipts = Object.fromEntries(
       this.revisions.map((rev) => [rev.id, rev.serializeReceipt()])
     );
-    const buf = JSON.stringify(obj, null, 2);
+    const col: ReceiptCollection = {
+      mwts: {
+        version: RECEIPT_COLLECTION_FORMAT_VERSION,
+      },
+      receipts: receipts,
+    };
+    const buf = JSON.stringify(col, null, 2);
 
     await fs.writeFileSync(dst, buf);
     this.ctx.log(`Wrote ${buf.length} bytes to receipt ${dst}`);
