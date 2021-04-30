@@ -1,7 +1,7 @@
 {
   "name": "mwts",
   "description": "create and verify OpenTimestamps for MediaWiki exports",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "author": "Yugen Partners",
   "bin": {
     "mwts": "./bin/run"
@@ -33,7 +33,8 @@
     "/bin",
     "/lib",
     "/npm-shrinkwrap.json",
-    "/oclif.manifest.json"
+    "/oclif.manifest.json",
+    "/src"
   ],
   "homepage": "https://github.com/yugenpartners/mwts",
   "keywords": [
