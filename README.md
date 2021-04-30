@@ -3,9 +3,12 @@
 create and verify OpenTimestamps for MediaWiki exports
 
 [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
+
+<!--
 [![Version](https://img.shields.io/npm/v/mwts.svg)](https://npmjs.org/package/mwts)
 [![Downloads/week](https://img.shields.io/npm/dw/mwts.svg)](https://npmjs.org/package/mwts)
 [![License](https://img.shields.io/npm/l/mwts.svg)](https://github.com/yugenpartners/mwts/blob/master/package.json)
+-->
 
 <!-- toc -->
 
@@ -15,6 +18,28 @@ create and verify OpenTimestamps for MediaWiki exports
 <!-- tocstop -->
 
 # Usage
+
+```sh-session
+$ git clone https://github.com/yugenpartners/mwts
+$ cd mwts
+$ npm i
+$ bin/run help
+create and verify OpenTimestamps for MediaWiki exports
+
+VERSION
+  mwts/0.0.0 darwin-x64 node-v15.2.0
+
+USAGE
+  $ mwts [COMMAND]
+
+COMMANDS
+  help    display help for mwts
+  stamp   timestamp a MediaWiki export
+  verify  verify a MediaWiki ".xml" export against a collection of OpenTimestamps receipts
+```
+
+## Eventually (once published to NPM)
+
 <!-- usage -->
 
 ```sh-session
