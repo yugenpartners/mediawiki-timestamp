@@ -5,7 +5,7 @@ const OpenTimestamps = require('opentimestamps');
 import { Context, RevisionLog } from '../mediawiki';
 
 export default class Stamp extends Command {
-  static description = 'timestamp a MediaWiki export';
+  static description = 'timestamp a MediaWiki ".xml" export';
   static flags = {
     ...cli.table.flags(),
   };

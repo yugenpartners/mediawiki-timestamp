@@ -1,55 +1,68 @@
-mwts
-====
+# mwts
 
 create and verify OpenTimestamps for MediaWiki exports
 
 [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
+
+<!--
 [![Version](https://img.shields.io/npm/v/mwts.svg)](https://npmjs.org/package/mwts)
 [![Downloads/week](https://img.shields.io/npm/dw/mwts.svg)](https://npmjs.org/package/mwts)
 [![License](https://img.shields.io/npm/l/mwts.svg)](https://github.com/yugenpartners/mwts/blob/master/package.json)
+-->
 
 <!-- toc -->
-* [Usage](#usage)
-* [Commands](#commands)
+
+- [mwts](#mwts)
+- [Usage](#usage)
+- [Commands](#commands)
 <!-- tocstop -->
+
 # Usage
+
+```sh-session
+$ git clone https://github.com/yugenpartners/mwts
+$ cd mwts
+$ npm i
+$ bin/run help
+create and verify OpenTimestamps for MediaWiki exports
+
+VERSION
+  mwts/0.0.0 darwin-x64 node-v15.2.0
+
+USAGE
+  $ mwts [COMMAND]
+
+COMMANDS
+  help    display help for mwts
+  stamp   timestamp a MediaWiki export
+  verify  verify a MediaWiki ".xml" export against a collection of OpenTimestamps receipts
+```
+
+## Eventually (once published to NPM)
+
 <!-- usage -->
+
 ```sh-session
 $ npm install -g mwts
 $ mwts COMMAND
 running command...
 $ mwts (-v|--version|version)
-mwts/0.0.0 darwin-x64 node-v15.2.0
+mwts/1.0.0 darwin-x64 node-v15.2.0
 $ mwts --help [COMMAND]
 USAGE
   $ mwts COMMAND
 ...
 ```
+
 <!-- usagestop -->
+
 # Commands
+
 <!-- commands -->
-* [`mwts hello [FILE]`](#mwts-hello-file)
-* [`mwts help [COMMAND]`](#mwts-help-command)
 
-## `mwts hello [FILE]`
-
-describe the command here
-
-```
-USAGE
-  $ mwts hello [FILE]
-
-OPTIONS
-  -f, --force
-  -h, --help       show CLI help
-  -n, --name=name  name to print
-
-EXAMPLE
-  $ mwts hello
-  hello world from ./src/hello.ts!
-```
-
-_See code: [src/commands/hello.ts](https://github.com/yugenpartners/mwts/blob/v0.0.0/src/commands/hello.ts)_
+- [`mwts help [COMMAND]`](#mwts-help-command)
+- [`mwts stamp EXPORT`](#mwts-stamp-export)
+- [`mwts verify EXPORT RECEIPTS`](#mwts-verify-export-receipts)
 
 ## `mwts help [COMMAND]`
 
@@ -67,4 +80,54 @@ OPTIONS
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.2.2/src/commands/help.ts)_
+
+## `mwts stamp EXPORT`
+
+timestamp a MediaWiki ".xml" export
+
+```
+USAGE
+  $ mwts stamp EXPORT
+
+ARGUMENTS
+  EXPORT  MediaWiki ".xml" export
+
+OPTIONS
+  -x, --extended          show extra columns
+  --columns=columns       only show provided columns (comma-separated)
+  --csv                   output is csv format [alias: --output=csv]
+  --filter=filter         filter property by partial string matching, ex: name=foo
+  --no-header             hide table header from output
+  --no-truncate           do not truncate output to fit screen
+  --output=csv|json|yaml  output in a more machine friendly format
+  --sort=sort             property to sort by (prepend '-' for descending)
+```
+
+_See code: [src/commands/stamp.ts](https://github.com/yugenpartners/mwts/blob/v1.0.0/src/commands/stamp.ts)_
+
+## `mwts verify EXPORT RECEIPTS`
+
+verify a MediaWiki ".xml" export against a ".ots.json" collection of OpenTimestamps receipts
+
+```
+USAGE
+  $ mwts verify EXPORT RECEIPTS
+
+ARGUMENTS
+  EXPORT    ".xml" export from MediaWiki
+  RECEIPTS  ".xml.ots.json" receipt collection from mwts
+
+OPTIONS
+  -x, --extended          show extra columns
+  --columns=columns       only show provided columns (comma-separated)
+  --csv                   output is csv format [alias: --output=csv]
+  --filter=filter         filter property by partial string matching, ex: name=foo
+  --no-header             hide table header from output
+  --no-truncate           do not truncate output to fit screen
+  --output=csv|json|yaml  output in a more machine friendly format
+  --sort=sort             property to sort by (prepend '-' for descending)
+```
+
+_See code: [src/commands/verify.ts](https://github.com/yugenpartners/mwts/blob/v1.0.0/src/commands/verify.ts)_
+
 <!-- commandsstop -->
