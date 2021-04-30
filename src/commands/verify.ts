@@ -10,7 +10,7 @@ import {
 
 export default class Verify extends Command {
   static description =
-    'verify a MediaWiki ".xml" export against a collection of OpenTimestamps receipts';
+    'verify a MediaWiki ".xml" export against a ".ots.json" collection of OpenTimestamps receipts';
   static flags = {
     ...cli.table.flags(),
   };
