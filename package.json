@@ -51,6 +51,9 @@
     ]
   },
   "repository": "yugenpartners/mwts",
+  "release": {
+    "branches": ["main"]
+  },
   "scripts": {
     "postpack": "rm -f oclif.manifest.json",
     "posttest": "eslint . --ext .ts --config .eslintrc",
