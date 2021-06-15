@@ -1,26 +1,23 @@
-# mwts
+# mediawiki-timestamp
 
 create and verify OpenTimestamps for MediaWiki exports
 
 [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
 
-<!--
-[![Version](https://img.shields.io/npm/v/mwts.svg)](https://npmjs.org/package/mwts)
-[![Downloads/week](https://img.shields.io/npm/dw/mwts.svg)](https://npmjs.org/package/mwts)
-[![License](https://img.shields.io/npm/l/mwts.svg)](https://github.com/yugenpartners/mwts/blob/master/package.json)
--->
+[![Version](https://img.shields.io/npm/v/mediawiki-timestamp.svg)](https://npmjs.org/package/mediawiki-timestamp)
+[![Downloads/week](https://img.shields.io/npm/dw/mediawiki-timestamp.svg)](https://npmjs.org/package/mediawiki-timestamp)
+[![License](https://img.shields.io/npm/l/mediawiki-timestamp.svg)](https://github.com/yugenpartners/mediawiki-timestamp/blob/master/package.json)
 
 <!-- toc -->
-
-- [mwts](#mwts)
-- [Usage](#usage)
-- [Commands](#commands)
+* [mediawiki-timestamp](#mediawiki-timestamp)
+* [Usage](#usage)
+* [Commands](#commands)
 <!-- tocstop -->
 
 # Usage
 
 ```sh-session
-$ git clone https://github.com/yugenpartners/mwts
+$ git clone https://github.com/yugenpartners/mediawiki-timestamp
 $ cd mwts
 $ npm i
 $ bin/run help
@@ -41,28 +38,25 @@ COMMANDS
 ## Eventually (once published to NPM)
 
 <!-- usage -->
-
 ```sh-session
-$ npm install -g mwts
+$ npm install -g mediawiki-timestamp
 $ mwts COMMAND
 running command...
 $ mwts (-v|--version|version)
-mwts/1.0.0 darwin-x64 node-v15.2.0
+mediawiki-timestamp/0.0.0-development darwin-x64 node-v15.2.0
 $ mwts --help [COMMAND]
 USAGE
   $ mwts COMMAND
 ...
 ```
-
 <!-- usagestop -->
 
 # Commands
 
 <!-- commands -->
-
-- [`mwts help [COMMAND]`](#mwts-help-command)
-- [`mwts stamp EXPORT`](#mwts-stamp-export)
-- [`mwts verify EXPORT RECEIPTS`](#mwts-verify-export-receipts)
+* [`mwts help [COMMAND]`](#mwts-help-command)
+* [`mwts stamp EXPORT`](#mwts-stamp-export)
+* [`mwts verify EXPORT RECEIPTS`](#mwts-verify-export-receipts)
 
 ## `mwts help [COMMAND]`
 
@@ -103,7 +97,7 @@ OPTIONS
   --sort=sort             property to sort by (prepend '-' for descending)
 ```
 
-_See code: [src/commands/stamp.ts](https://github.com/yugenpartners/mwts/blob/v1.0.0/src/commands/stamp.ts)_
+_See code: [src/commands/stamp.ts](https://github.com/yugenpartners/mediawiki-timestamp/blob/v0.0.0-development/src/commands/stamp.ts)_
 
 ## `mwts verify EXPORT RECEIPTS`
 
@@ -128,6 +122,5 @@ OPTIONS
   --sort=sort             property to sort by (prepend '-' for descending)
 ```
 
-_See code: [src/commands/verify.ts](https://github.com/yugenpartners/mwts/blob/v1.0.0/src/commands/verify.ts)_
-
+_See code: [src/commands/verify.ts](https://github.com/yugenpartners/mediawiki-timestamp/blob/v0.0.0-development/src/commands/verify.ts)_
 <!-- commandsstop -->
