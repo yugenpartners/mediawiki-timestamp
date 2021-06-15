@@ -68,7 +68,7 @@ export class RevisionLog {
     this.revisions = await Promise.all(
       elRevisions.map(async (el) => {
         const R = await Revision.fromElement(this, el);
-        this.pages.set(R.page.title, R.page);
+        this.pages.set(<string>R.page?.title, <Page>R.page);
         return R;
       })
     );
@@ -78,7 +78,7 @@ export class RevisionLog {
     cli.table(
       this.revisions,
       {
-        page: { get: (row) => row.page.title },
+        page: { get: (row) => <string>row.page?.title },
         id: { header: 'ID' },
         timestamp: {},
         sha1: { header: 'SHA1' },
@@ -124,22 +124,22 @@ export class RevisionLog {
 export class Revision {
   static base = 'base64';
 
-  log: RevisionLog | null;
+  log: RevisionLog | null = null;
 
-  page: Page;
-  id: number;
-  timestamp: string;
+  page: Page | undefined;
+  id: number = -1;
+  timestamp: string | undefined;
 
   // Cf. <https://www.mediawiki.org/wiki/Manual:Revision_table#rev_sha1>.
   // This is included as a convenience for looking up revisions by their
   // SHA1 value given in the MediaWiki export file.
-  sha1: string;
+  sha1: string | undefined;
 
   // Our metadata:
   _otsReceipt: any; // loaded and verified from .ots.json collection
   _otsTimestamp: any; // generated on .xml load
-  _sha256: string;
-  _size: number;
+  _sha256: string | undefined;
+  _size: number | undefined;
   _verificationResult: string | undefined;
   _verificationStatus: VerificationStatus = VerificationStatus.Unknown;
 
