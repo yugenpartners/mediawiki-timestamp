@@ -16,34 +16,13 @@ create and verify OpenTimestamps for MediaWiki exports
 
 # Usage
 
-```sh-session
-$ git clone https://github.com/yugenpartners/mediawiki-timestamp
-$ cd mwts
-$ npm i
-$ bin/run help
-create and verify OpenTimestamps for MediaWiki exports
-
-VERSION
-  mwts/0.0.0 darwin-x64 node-v15.2.0
-
-USAGE
-  $ mwts [COMMAND]
-
-COMMANDS
-  help    display help for mwts
-  stamp   timestamp a MediaWiki export
-  verify  verify a MediaWiki ".xml" export against a collection of OpenTimestamps receipts
-```
-
-## Eventually (once published to NPM)
-
 <!-- usage -->
 ```sh-session
 $ npm install -g mediawiki-timestamp
 $ mwts COMMAND
 running command...
 $ mwts (-v|--version|version)
-mediawiki-timestamp/0.0.0-development darwin-x64 node-v15.2.0
+mediawiki-timestamp/0.0.0-development darwin-x64 node-v14.17.3
 $ mwts --help [COMMAND]
 USAGE
   $ mwts COMMAND
