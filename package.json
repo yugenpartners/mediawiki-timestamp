@@ -39,9 +39,11 @@
   ],
   "homepage": "https://github.com/yugenpartners/mediawiki-timestamp",
   "keywords": [
+    "mediawiki",
+    "opentimestamps",
     "oclif"
   ],
-  "license": " ",
+  "license": "MIT",
   "main": "lib/index.js",
   "oclif": {
     "commands": "./lib/commands",
